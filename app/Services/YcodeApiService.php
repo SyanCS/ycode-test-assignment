@@ -34,7 +34,19 @@ class YcodeApiService
 		];
 	}
 
-	public function getBaseUrl()
+	private function formatPayloadForYcode(array $array): array
+	{
+		$formattedArray = [];
+
+    foreach ($array as $key => $value) {
+			$formattedKey = ucwords(str_replace('_', ' ', $key));
+			$formattedArray[$formattedKey] = $value;
+		}
+
+    return $formattedArray;
+	}
+
+	private function getBaseUrl()
 	{
 		return self::BASE_URL;
 	}
@@ -76,11 +88,11 @@ class YcodeApiService
 
 	public function createOrder($payload)
 	{
-		$response = $this->postRequest('collections/' . Config::get('ycodecollections.Orders') . '/items', $payload);
+		$payload = $this->formatPayloadForYcode($payload);
 
-		if ($response->getStatusCode() == 201) {
-			$data = json_decode($response->getBody(), true);
-			return $data;
+		$response = $this->postRequest('collections/' . $this->collections['ORDERS'] . '/items', $payload);
+		if ($response->getStatusCode() == 200) {
+			return $response->json();
 		} else {
 			throw new Exception('Failed to create order');
 		}
@@ -88,11 +100,10 @@ class YcodeApiService
 
 	public function createOrderItem($payload)
 	{
-		$response = $this->postRequest('collections/' . Config::get('ycodecollections.OrderItems') . '/items', $payload);
-
-		if ($response->getStatusCode() == 201) {
-			$data = json_decode($response->getBody(), true);
-			return $data;
+		$payload = $this->formatPayloadForYcode($payload);
+		$response = $this->postRequest('collections/' . $this->collections['ORDER_ITEMS'] . '/items', $payload);
+		if ($response->getStatusCode() == 200) {
+			return $response->json();
 		} else {
 			throw new Exception('Failed to create order item');
 		}
@@ -100,10 +111,11 @@ class YcodeApiService
 
 	public function createProduct($payload)
 	{
-		$response = $this->postRequest('collections/' . Config::get('ycodecollections.Products') . '/items', $payload);
-		if ($response->getStatusCode() == 201) {
-			$data = json_decode($response->getBody(), true);
-			return $data;
+		$payload = $this->formatPayloadForYcode($payload);
+
+		$response = $this->postRequest('collections/' . $this->collections['PRODUCTS'] . '/items', $payload);
+		if ($response->getStatusCode() == 200) {
+			return $response->json();
 		} else {
 			throw new Exception('Failed to create product');
 		}

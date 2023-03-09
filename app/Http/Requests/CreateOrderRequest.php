@@ -15,12 +15,14 @@ class CreateOrderRequest extends FormRequest
 	{
 		return [
 			'orderData.email' => 'required|email',
-			'orderData.firstName' => 'required',
-			'orderData.lastName' => 'required',
-			'orderData.addressLine1' => 'required',
+			'orderData.first_name' => 'required',
+			'orderData.last_name' => 'required',
+			'orderData.address' => 'required',
+			'orderData.apartment' => 'nullable',
 			'orderData.city' => 'required',
 			'orderData.country' => 'required',
-			'orderData.postalCode' => 'required',
+			'orderData.state' => 'required',
+			'orderData.zip' => 'required',
 			'orderData.phone' => 'required',
 			'products.*.id' => 'required|exists:products,id',
 			'products.*.quantity' => 'required|integer|min:1',

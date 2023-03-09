@@ -20,7 +20,7 @@ Route::middleware('auth:sanctum')->get('/user', function (Request $request) {
     return $request->user();
 });
 
-Route::get('/products', [ProductController::class, 'index'])->name('products.index');
-Route::get('/products/{id}', [ProductController::class, 'show'])->name('products.show');
-Route::post('/api/orders', [OrderController::class, 'store']);
+Route::get('/products', [\App\Http\Controllers\ProductController::class, 'index'])->name('products.index');
+Route::get('/products/{id}', [\App\Http\Controllers\ProductController::class, 'show'])->name('products.show');
+Route::post('/checkout/', [\App\Http\Controllers\CheckoutController::class, 'checkout']);
 

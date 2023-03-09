@@ -11,8 +11,9 @@ class Kernel extends ConsoleKernel
      * Define the application's command schedule.
      */
     protected function schedule(Schedule $schedule): void
-    {
-        // $schedule->command('inspire')->hourly();
+    { 
+        //run failed syncs
+        $schedule->job(new \App\Jobs\SendOrderToYcode)->dailyAt('03:00');;
     }
 
     /**

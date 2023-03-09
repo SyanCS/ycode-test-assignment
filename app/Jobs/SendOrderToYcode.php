@@ -24,7 +24,7 @@ class SendOrderToYcode implements ShouldQueue
      * @param  int  $orderId
      * @return void
      */
-    public function __construct($orderId)
+    public function __construct($orderId = null)
     {
         $this->orderId = $orderId;
     }
@@ -42,27 +42,20 @@ class SendOrderToYcode implements ShouldQueue
             // This is to send the orders that failed to sync when
             // the order was placed for some reason
             $orders = Order::whereNull('ycode_id')->get();
-            $orderItems = OrderItem::whereNull('ycode_id')->get();
             $products = Product::whereNull('ycode_id')->get();
         } else {
-            $order = Order::findOrFail($this->orderId);
+            $orders = Order::where('id', $this->orderId)->whereNull('ycode_id')->get();
             $orderItems = OrderItem::where('order_id', $this->orderId)->get();
-            $products = Product::whereIn('id', $orderItems->pluck('product_id'))->get();
+            $products = 
+                Product::whereIn('id', $orderItems->pluck('product_id'))
+                ->whereNull('ycode_id')
+                ->get();
         }
 
-        $response = $apiService->createOrder($order->toArray());
-
-        if (isset($response['id'])) {
-            $order->update(['ycode_id' => $response['id']]);
-        } else {
-            return;
-        }
-
-        foreach ($orderItems as $orderItem) {
-            $response = $apiService->createOrderItem($orderItem->toArray());
-
-            if (isset($response['id'])) {
-                $orderItem->update(['ycode_id' => $response['id']]);
+        foreach ($orders as $order) {
+            $response = $apiService->createOrder($order->toArray());
+            if (isset($response['_ycode_id'])) {
+                $order->update(['ycode_id' => $response['_ycode_id']]);
             } else {
                 return;
             }
@@ -71,8 +64,34 @@ class SendOrderToYcode implements ShouldQueue
         foreach ($products as $product) {
             $response = $apiService->createProduct($product->toArray());
 
-            if (isset($response['id'])) {
-                $product->update(['ycode_id' => $response['id']]);
+            if (isset($response['_ycode_id'])) {
+                $product->update(['ycode_id' => $response['_ycode_id']]);
+            } else {
+                return;
+            }
+        }
+
+        if (!$this->orderId) {
+            $orderItems = OrderItem::select('order_items.name', 'order_items.quantity' ,'products.ycode_id as product', 'orders.ycode_id as order')                
+                ->leftJoin('products', 'products.id', '=', 'order_items.product_id')
+                ->leftJoin('orders', 'orders.id', '=', 'order_items.order_id')
+                ->whereNull('order_items.ycode_id')
+                ->get();
+        } else {
+            $orderItems = OrderItem::select('order_items.name', 'order_items.quantity' ,'products.ycode_id as product', 'orders.ycode_id as order')                
+                ->leftJoin('products', 'products.id', '=', 'order_items.product_id')
+                ->leftJoin('orders', 'orders.id', '=', 'order_items.order_id')
+                ->where('order_id', $this->orderId)
+                ->whereNull('order_items.ycode_id')
+                ->get();
+        }
+
+
+        foreach ($orderItems as $orderItem) {
+            $response = $apiService->createOrderItem($orderItem->toArray());
+
+            if (isset($response['_ycode_id'])) {
+                $orderItem->update(['ycode_id' => $response['_ycode_id']]);
             } else {
                 return;
             }
